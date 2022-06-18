@@ -1,5 +1,8 @@
-package com.emergetools.perfetto.flamegraph.generation.data
+package generation.models
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class PerfettoThread(
     val id: Int,
     val utid: Int,
@@ -7,7 +10,7 @@ data class PerfettoThread(
     val startTs: Long,
     val endTs: Long? = null,
     val processId: Int,
+    val samples: List<PerfettoSample>,
 ) {
-    val isMainThread: Boolean
-        get() = id == processId
+    val isMainThread: Boolean = id == processId
 }

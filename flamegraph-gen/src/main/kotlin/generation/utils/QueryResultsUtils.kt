@@ -1,13 +1,15 @@
-package com.emergetools.perfetto.flamegraph.generation.utils
+package generation.utils
 
-fun <T> String.mapResults(block: (String) -> T): List<T> {
-    val resultLines = split("\n")
-
-    //println(resultLines.first())
-
-    //println("Results: $this")
+fun <T> String.mapResultsInParallel(block: (List<String>) -> T): List<T> {
     return split("\n")
         .filter { it.isNotBlank() } // drop blank lines
         .drop(1) // drop the header row
-        .map(block)
+        .mapInParallel { block(it.split(",")) } // Results will be in csv format
+}
+
+fun <T> String.mapResults(block: (List<String>) -> T): List<T> {
+    return split("\n")
+        .filter { it.isNotBlank() }
+        .drop(1)
+        .map { block(it.split(",")) }
 }

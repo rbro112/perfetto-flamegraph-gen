@@ -1,16 +1,23 @@
-@file:Suppress("UnstableApiUsage")
-
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.6.21"
+    application
+    kotlin("jvm")
+    id("com.github.johnrengelman.shadow")
 }
 
-group = "com.emerge"
+group = "com.emerge.flamegraphgen"
 version = "1.0"
+
+application {
+    mainClass.set("com.emergetools.flamegraph.gen.cli.FlamegraphGenKt")
+    mainClassName = mainClass.get()
+}
 
 dependencies {
     implementation(libs.clikt)
+    implementation(project(":flamegraph-gen"))
     testImplementation(kotlin("test"))
 }
 
@@ -19,20 +26,41 @@ tasks.test {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = JavaVersion.VERSION_11.toString()
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
 }
 
-tasks.
+tasks {
+    named<ShadowJar>("shadowJar") {
+        manifest {
+            attributes(mapOf("Main-Class" to "\$wrapperClassName"))
+        }
+        isZip64 = true
+        archiveBaseName.set("perfetto-flamegraph-gen")
+        // Ignores the "-all" classifier shadow uses by default
+        archiveClassifier.set("")
+    }
+    register("executable") {
+        logger.info("Packaging ${project.name} into an executable binary...")
+        dependsOn("shadowJar")
 
-// TODO: Ability to pass arg for specific output
-tasks.create("Download prebuilts") {
-    val os = System.getProperty("os")
+        doLast {
+            val jarFile = File(
+                project.buildDir,
+                "libs/perfetto-flamegraph-gen-${project.version}.jar"
+            )
+            require(jarFile.exists()) { "shadowJar output file at ${jarFile.canonicalPath} does not exist!" }
+            val executableFile = File(project.buildDir, "libs/perfetto-flamegraph-gen")
 
-    downloadPrebuilt()
+            executableFile.apply {
+                writeText("#!/usr/bin/env bash\nexec java -jar \$0 \"\$@\"\n")
+                appendBytes(jarFile.readBytes())
+                setExecutable(true)
+            }
+        }
+    }
 }
 
-
-// TODO: As part of build, download and store prebuilt in local dir or in jar depending on task
+// TODO: As part of build, download and store prebuilt in local dir or in jar depending on config
 data class TraceProcessorPrebuilt(
     val tool: String,
     val arch: String,
@@ -42,20 +70,21 @@ data class TraceProcessorPrebuilt(
     val sha256: String,
     val platform: String? = null,
     val machine: List<String> = emptyList()
-)
+) {
+    fun outputFile(outputDir: String): File {
+        return File(outputDir, "/$arch/$fileName")
+    }
+}
 
 fun downloadPrebuilt(
     traceProcessorPrebuilt: TraceProcessorPrebuilt,
-    path: String
+    destFile: File
 ) {
-    val destFile = File(path)
     ant.invokeMethod("get", mapOf("src" to traceProcessorPrebuilt.url, "dest" to destFile))
-    // TODO: CHecksums, other logic needed per the fields
 }
 
 /**
- * TODO: Doc where we got these from
- * https://github.com/google/perfetto/blob/master/tools/trace_processor
+ * From https://github.com/google/perfetto/blob/master/tools/trace_processor
  */
 val traceProcessorPrebuiltMacAmd64 = TraceProcessorPrebuilt(
     tool = "trace_processor_shell",
@@ -153,8 +182,21 @@ val traceProcessorPrebuiltWindowsAmd64 = TraceProcessorPrebuilt(
     arch = "windows-amd64",
     fileName = "trace_processor_shell.exe",
     fileSize = 7080448,
-    url = "https://commondatastorage.googleapis.com/perfetto-luci-artifacts/v26.1/windows-amd64/trace_processor_shell",
+    url = "https://commondatastorage.googleapis.com/perfetto-luci-artifacts/v26.1/windows-amd64/trace_processor_shell.exe",
     sha256 = "18649f0d6980839a2303ff4e7726114e96e700323018dbf74a579691df233bb5",
     platform = "win32",
     machine = listOf("amd64"),
+)
+
+val traceProcessorPrebuilts = listOf(
+    traceProcessorPrebuiltMacAmd64,
+    traceProcessorPrebuiltMacArm64,
+    traceProcessorPrebuiltLinuxAmd64,
+    traceProcessorPrebuiltLinuxArm,
+    traceProcessorPrebuiltLinuxArm64,
+    traceProcessorPrebuiltAndroidArm,
+    traceProcessorPrebuiltAndroidArm64,
+    traceProcessorPrebuiltAndroidx86,
+    traceProcessorPrebuiltAndroidx64,
+    traceProcessorPrebuiltWindowsAmd64,
 )

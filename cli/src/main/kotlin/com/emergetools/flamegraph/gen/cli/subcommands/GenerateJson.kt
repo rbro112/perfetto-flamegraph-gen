@@ -1,30 +1,28 @@
 package com.emergetools.flamegraph.gen.cli.subcommands
 
-import com.github.ajalt.clikt.parameters.options.option
 import generation.PerfettoTrace
+import generation.queries.getProcess
+import generation.transforms.JsonFlamegraphTransformer
+import kotlin.io.path.appendText
+import kotlin.io.path.createFile
+import kotlin.io.path.deleteIfExists
 
-// TODO: Rename to generate folded
-class GenerateFlamegraphJson : GenerateSubcommand(
+class GenerateJson : GenerateSubcommand(
     name = "json",
     help = "Generate a flamegraph JSON representation of the timestamped samples."
 ) {
+    override fun script() {
+        // So we don't run into any issues writing a file that already exists
+        output.deleteIfExists()
 
-    // TODO: Process Id/names (required)
+        val perfettoTrace = PerfettoTrace(trace, traceProcessor)
+        val process = perfettoTrace.getProcess(processName)
 
-    // TODO: Thread id/names (optional - will return all threads)
-
-    // TODO: Proguard mapping path (optional)
-    // TODO: Start timestamp (optional)
-    // TODO: End timestamp (optional)
-
-    // TODO: Binary to perfetto trace processor
-    private val proguardMapping by option()
-
-    // TODO
-    override fun run() {
-        val perfettoTrace = PerfettoTrace(trace, traceProcessorPath = traceProcessor)
-
-
-        // TODO
+        val jsonResults = JsonFlamegraphTransformer.transform(
+            trace = perfettoTrace,
+            process = process,
+        )
+        output.createFile().appendText(jsonResults)
+        println("JSON flamegraph written to $output")
     }
 }

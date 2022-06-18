@@ -1,59 +1,56 @@
-package com.emergetools.perfetto.flamegraph.generation
+package generation
 
 import java.nio.charset.Charset
-import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.createTempDirectory
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteExisting
-import kotlin.io.path.pathString
 import kotlin.io.path.writeText
 
-class PerfettoTrace(val path: Path) {
-
-    private val traceProcessorWorkingDir by lazy {
-        createTempDirectory("perfetto_shell")
-    }
+class PerfettoTrace(
+    private val path: Path,
+    private val traceProcessorPath: Path?,
+) {
 
     private val executable by lazy {
-        createPerfettoTraceProcessor(traceProcessorWorkingDir)
+        getPerfettoTraceProcessor(traceProcessorPath)
     }
+
+    // TODO: Helper to determine if has perf sampling enabled or not
 
     /**
      * Results will be in csv format, with the first line being the header/columns
      * and the remaining lines being the data.
      */
-    fun runQuery(
-        query: String
-    ): String {
-
-        val queryFile = kotlin.io.path.createTempFile("trace_processor_query.sql")
+    fun runQuery(queryString: String): String {
+        val queryFile = createTempFile("trace_processor_query.sql")
         try {
-            queryFile.writeText(query)
-
-            val process = ProcessBuilder(
-                executable.pathString,
-                "--query-file",
-                queryFile.pathString,
-                path.pathString,
-            ).start()
-            process.waitFor()
-            return process.inputStream.readBytes().toString(Charset.defaultCharset())
+            queryFile.writeText(queryString)
+            return runQuery(queryFile)
         } finally {
             queryFile.deleteExisting()
         }
     }
 
+    fun runQuery(queryFile: Path): String {
+        val process = ProcessBuilder(
+            executable.absolutePathString(),
+            "--query-file",
+            queryFile.absolutePathString(),
+            path.absolutePathString(),
+        ).start()
+        // TODO: Handle err stream.
+        return process.inputStream.readBytes().toString(Charset.defaultCharset())
+    }
+
     companion object {
 
-        // TODO: Better way to get file automatically for run and for jar
-        fun createPerfettoTraceProcessor(workDir: Path): Path {
-            val traceProcessorFile = System.getenv()["TRACE_PROCESSOR_FILE"]?.let {
+        fun getPerfettoTraceProcessor(traceProcessorPath: Path?): Path {
+            val traceProcessorFile = traceProcessorPath ?: System.getenv()["TRACE_PROCESSOR_FILE"]?.let {
                 Path.of(it)
             } ?: throw IllegalStateException("No TRACE_PROCESSOR_FILE env variable present")
-            val traceProcessorDestFile = Path.of(workDir.pathString, "trace_processor_shell")
-            Files.copy(traceProcessorFile, traceProcessorDestFile)
-            traceProcessorDestFile.toFile().setExecutable(true)
-            return traceProcessorDestFile
+
+            return traceProcessorFile
         }
     }
 }

@@ -3,13 +3,13 @@
 # exit immediately if an error occurs
 set -euo pipefail
 
+# Quick helper to escape arguments when passing to ./gradlew cli:run
+
 # Pass all args to be escaped for passing to gradle build
 function escapeArgs() {
-  # Iterate through arguments after the second one (module name) since gradle requires them to be
-  # passed via an explicit flag.
+  # Iterate through arguments after the first one since gradle requires args via an explicit flag.
   escapedArguments=''
-  for arg in "${@:3}"; do
-    # Wrap the argument in quotes and escape it
+  for arg in "${@:1}"; do
     arg="${arg//\\/\\\\}"
     arg="\"${arg//\"/\\\"}\""
 
@@ -25,9 +25,10 @@ function escapeArgs() {
   echo "$escapedArguments"
 }
 
-rootDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-# Need to be in the root project directory for ./gradlew to work
-cd "$rootDir"
+currentDir=$(dirname -- "$0")
+# Need to be in the root project directory for ./gradlew
+cd "$currentDir/.."
 
 escapedArguments="$(escapeArgs "$@")"
+echo escapeArgs: "$escapedArguments"
 ./gradlew cli:run "$escapedArguments"
