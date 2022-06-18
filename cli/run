@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# exit immediately if an error occurs
+set -euo pipefail
+
+# Pass all args to be escaped for passing to gradle build
+function escapeArgs() {
+  # Iterate through arguments after the second one (module name) since gradle requires them to be
+  # passed via an explicit flag.
+  escapedArguments=''
+  for arg in "${@:3}"; do
+    # Wrap the argument in quotes and escape it
+    arg="${arg//\\/\\\\}"
+    arg="\"${arg//\"/\\\"}\""
+
+    # The arguments must be comma separated and passed via the --args flag to gradle.
+    # -z checks for the empty, initial case to start building the string.
+    if [ -z "$escapedArguments" ]; then
+      escapedArguments="--args=$arg"
+    else
+      escapedArguments="$escapedArguments $arg"
+    fi
+  done
+
+  echo "$escapedArguments"
+}
+
+rootDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+# Need to be in the root project directory for ./gradlew to work
+cd "$rootDir"
+
+escapedArguments="$(escapeArgs "$@")"
+./gradlew cli:run "$escapedArguments"
