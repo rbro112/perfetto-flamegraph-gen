@@ -1,9 +1,9 @@
-package com.emergetools.flamegraph.gen.cli
+package com.rbro.flamegraph.gen.cli
 
-import com.emergetools.flamegraph.gen.cli.subcommands.GenerateJson
-import com.emergetools.flamegraph.gen.cli.subcommands.GenerateFoldedStacks
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
+import com.rbro.flamegraph.gen.cli.subcommands.GenerateFoldedStacks
+import com.rbro.flamegraph.gen.cli.subcommands.GenerateJson
 
 fun main(args: Array<String>) = FlamegraphGen()
     .subcommands(

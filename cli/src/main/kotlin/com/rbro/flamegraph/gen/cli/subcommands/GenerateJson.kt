@@ -1,4 +1,4 @@
-package com.emergetools.flamegraph.gen.cli.subcommands
+package com.rbro.flamegraph.gen.cli.subcommands
 
 import generation.PerfettoTrace
 import generation.queries.getProcess
@@ -16,7 +16,7 @@ class GenerateJson : GenerateSubcommand(
         output.deleteIfExists()
 
         val perfettoTrace = PerfettoTrace(trace, traceProcessor)
-        val process = perfettoTrace.getProcess(processName)
+        val process = perfettoTrace.getProcess(processName, mainThreadOnly)
 
         val jsonResults = JsonFlamegraphTransformer.transform(
             trace = perfettoTrace,

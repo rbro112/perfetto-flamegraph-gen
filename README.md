@@ -116,7 +116,7 @@ Sample:
 
 #### Other formats
 
-Interested in other formats? Open a PR with the [Transformer]() implementation.
+Interested in other formats? Open a PR with the [Transformer](https://github.com/rbro112/perfetto-flamegraph-gen/blob/main/flamegraph-gen/src/main/kotlin/generation/transforms/Transformer.kt) implementation.
 
 ### Options
 
@@ -127,19 +127,23 @@ Interested in other formats? Open a PR with the [Transformer]() implementation.
 | --process         | Name of the process to generate a flamegraph for all threads.                                           | Yes       |
 | --trace-processor | Path to the `trace_processor` binary. Will use `PERFETTO_TRACE_PROCESSOR` env variable if none provided | No        |
 
-### Proguard mapping & symbolication
+### Proguard mapping, demangling & symbolication
 
-TODO
+TODO!
 
 ## Library
 
-We hope to package `flamegraph-gen` as a standalone library in the near future. Open an issue if you need it sooner!
+I hope to package `flamegraph-gen` as a standalone library in the near future. Open an issue if you need it sooner!
 
 ## Future improvements
 
-- [] Package `trace_processor` into the `perfetto-flamegraph-gen` jar/executable.
-- [] Package `flamegraph-gen` into standalone library.
-- [] Improve runtime performance.
-- [] Add support for multiple processes.
-- [] Add support for specific thread samples.
-- [] Add support for error stream from `trace_processor`.
+- Add proguard mapping support.
+- Add demangling support.
+- Add symbolication support.
+- Support [Gecko](https://github.com/firefox-devtools/profiler/blob/main/docs-developer/gecko-profile-format.md) profile format.
+- Package `trace_processor` into the `perfetto-flamegraph-gen` jar/executable.
+- Package `flamegraph-gen` into standalone library.
+- Improve runtime performance.
+- Add support for multiple processes.
+- Add support for specific thread samples.
+- Add support for error stream from `trace_processor`.

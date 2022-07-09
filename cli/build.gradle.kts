@@ -7,12 +7,24 @@ plugins {
     id("com.github.johnrengelman.shadow")
 }
 
-group = "com.emerge.flamegraphgen"
-version = "1.0"
+group = "com.rbro.flamegraphgen"
+version = "1.0.0"
 
 application {
-    mainClass.set("com.emergetools.flamegraph.gen.cli.FlamegraphGenKt")
+    mainClass.set("com.rbro.flamegraph.gen.cli.FlamegraphGenKt")
     mainClassName = mainClass.get()
+}
+
+configure<SourceSetContainer> {
+    named("main") {
+        java.srcDir("src/main/kotlin")
+    }
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
 }
 
 dependencies {
@@ -21,18 +33,10 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
-tasks.test {
-    useJUnitPlatform()
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
-}
-
 tasks {
     named<ShadowJar>("shadowJar") {
         manifest {
-            attributes(mapOf("Main-Class" to "\$wrapperClassName"))
+            attributes["Main-Class"] = "com.rbro.flamegraph.gen.cli.FlamegraphGenKt"
         }
         isZip64 = true
         archiveBaseName.set("perfetto-flamegraph-gen")

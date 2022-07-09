@@ -11,9 +11,16 @@ data class PerfettoSample(
 
 @Serializable
 data class PerfettoFrame(
-    val callsiteId: Int?,
+    val callsiteId: Int,
     val frameId: Int,
     val parentCallsiteId: Int?,
     val depth: Int,
     val frameName: String,
-)
+    val deobfuscatedFrameName: String?,
+    val ts: Long?,
+    val tid: Int?,
+    val pid: Int?,
+) {
+    val name: String
+        get() = deobfuscatedFrameName ?: frameName
+}

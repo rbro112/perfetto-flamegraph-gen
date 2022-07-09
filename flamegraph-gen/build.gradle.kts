@@ -5,7 +5,7 @@ plugins {
     kotlin("plugin.serialization") version "1.6.21"
 }
 
-group = "com.emerge.flamegraphgen"
+group = "com.rbro.flamegraphgen"
 version = "1.0.0"
 
 dependencies {
